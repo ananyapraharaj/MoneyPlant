@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Garden Payment Page</title>
+  <link rel="stylesheet" href="style.css">
+ 
+
+</head>
+<body>
+  <div class="container">
+    <h1>🌿 Payment reminder</h1>
+   <form id="paymentForm">
+  <label>Amount</label>
+  <input type="number" id="amount" placeholder="₹">
+
+  <label>To Pay To</label>
+  <input type="text" id="title" placeholder="Landlord / Friend / Service">
+
+  <label>Recurring?</label>
+  <select id="recurring">
+    <option>No</option>
+    <option>Weekly</option>
+    <option>Monthly</option>
+    <option>Yearly</option>
+  </select>
+
+  <label>Deadline</label>
+  <input type="date" id="due_date">
+
+  <label for="category">Category:</label>
+<select id="category" name="category" required>
+  <option value="rent">Rent</option>
+  <option value="utilities">Utilities</option>
+  <option value="subscriptions">Subscriptions</option>
+  <option value="groceries">Groceries</option>
+  <option value="insurance">Insurance</option>
+  <option value="credit_card">Credit Card</option>
+  <option value="loan_emi">Loan EMI</option>
+  
+  <option value="education_fees">School/Education Fees</option>
+  <option value="shopping">Shopping</option>
+  <option value="travel">Travel</option>
+  <option value="medical">Medical</option>
+  <option value="misc">Miscellaneous</option>
+</select>
+
+
+  <label>Notes</label>
+  <textarea id="notes" placeholder="Any extra notes..."></textarea>
+
+  <button type="submit">Submit Reminder</button>
+</form>
+
+<p id="confirmation" style="margin-top: 20px;"></p>
+
+
+  </div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="script.js"></script>
+
+
+</body>
+</html>
+
+
+
+
