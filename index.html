@@ -2,68 +2,229 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Garden Payment Page</title>
-  <link rel="stylesheet" href="style.css">
- 
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Reminder</title>
+  <style>
+    :root {
+      --primary: #1a1a1a;
+      --secondary: #2ecc71;
+      --light: #f8f9fa;
+      --dark: #121212;
+      --gray: #333;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: var(--primary);
+      color: var(--light);
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .container {
+      background-color: var(--dark);
+      padding: 2.5rem;
+      border-radius: 12px;
+      max-width: 420px;
+      width: 90%;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      border: 1px solid var(--gray);
+    }
+    
+    h1 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      color: var(--secondary);
+      font-weight: 600;
+      font-size: 1.8rem;
+    }
+    
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    
+    label {
+      font-weight: 500;
+      color: var(--light);
+      font-size: 0.9rem;
+    }
+    
+    input, select, textarea {
+      background-color: var(--gray);
+      color: var(--light);
+      border: 1px solid #444;
+      border-radius: 6px;
+      padding: 0.8rem;
+      font-size: 0.95rem;
+      transition: all 0.2s;
+    }
+    
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--secondary);
+      box-shadow: 0 0 0 2px rgba(46, 204, 113, 0.2);
+    }
+    
+    button {
+      background-color: var(--secondary);
+      color: var(--dark);
+      border: none;
+      padding: 0.9rem;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 0.5rem;
+    }
+    
+    button:hover {
+      background-color: #27ae60;
+      transform: translateY(-1px);
+    }
+    
+    #confirmation {
+      margin-top: 1.5rem;
+      text-align: center;
+      padding: 0.8rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+    }
+    
+    .success {
+      background-color: rgba(46, 204, 113, 0.15);
+      color: var(--secondary);
+      border: 1px solid rgba(46, 204, 113, 0.3);
+    }
+    
+    .error {
+      background-color: rgba(231, 76, 60, 0.15);
+      color: #e74c3c;
+      border: 1px solid rgba(231, 76, 60, 0.3);
+    }
+    
+    #customRecurrenceContainer {
+      margin-top: 0.5rem;
+      display: none;
+    }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
   <div class="container">
-    <h1>🌿 Payment reminder</h1>
-   <form id="paymentForm">
-  <label>Amount</label>
-  <input type="number" id="amount" placeholder="₹">
+    <h1>Payment Reminder</h1>
+    <form id="paymentForm">
+      <label for="amount">Amount (₹)</label>
+      <input type="number" id="amount" name="amount" placeholder="e.g. 5000" required>
 
-  <label>To Pay To</label>
-  <input type="text" id="title" placeholder="Landlord / Friend / Service">
+      <label for="title">Recipient</label>
+      <input type="text" id="title" name="title" placeholder="Who to pay?" required>
 
-  <label>Recurring?</label>
-  <select id="recurring">
-    <option>No</option>
-    <option>Weekly</option>
-    <option>Monthly</option>
-    <option>Yearly</option>
-  </select>
+      <label for="due_date">Due Date</label>
+      <input type="date" id="due_date" name="due_date" required>
 
-  <label>Deadline</label>
-  <input type="date" id="due_date">
+      <label for="category">Category</label>
+      <select id="category" name="category" required>
+        <option value="Rent">Rent</option>
+        <option value="Utilities">Utilities</option>
+        <option value="Education">Education</option>
+        <option value="Groceries">Groceries</option>
+        <option value="Transportation">Transportation</option>
+        <option value="Entertainment">Entertainment</option>
+        <option value="Healthcare">Healthcare</option>
+        <option value="Insurance">Insurance</option>
+        <option value="Loan">Loan Payment</option>
+        <option value="Subscription">Subscription</option>
+        <option value="Shopping">Shopping</option>
+        <option value="Travel">Travel</option>
+        <option value="Gifts">Gifts</option>
+        <option value="Miscellaneous">Miscellaneous</option>
+      </select>
 
-  <label for="category">Category:</label>
-<select id="category" name="category" required>
-  <option value="rent">Rent</option>
-  <option value="utilities">Utilities</option>
-  <option value="subscriptions">Subscriptions</option>
-  <option value="groceries">Groceries</option>
-  <option value="insurance">Insurance</option>
-  <option value="credit_card">Credit Card</option>
-  <option value="loan_emi">Loan EMI</option>
-  
-  <option value="education_fees">School/Education Fees</option>
-  <option value="shopping">Shopping</option>
-  <option value="travel">Travel</option>
-  <option value="medical">Medical</option>
-  <option value="misc">Miscellaneous</option>
-</select>
+      <label for="recurrence">Payment Frequency</label>
+      <select id="recurrence" name="recurrence" required>
+        <option value="none">One-time</option>
+        <option value="daily">Daily</option>
+        <option value="weekly">Weekly</option>
+        <option value="biweekly">Every 2 weeks</option>
+        <option value="monthly">Monthly</option>
+        <option value="yearly">Yearly</option>
+        <option value="custom">Custom (every X days)</option>
+      </select>
 
+      <div id="customRecurrenceContainer">
+        <label for="customRecurrenceDays">Repeat every</label>
+        <input type="number" id="customRecurrenceDays" name="customRecurrenceDays" min="1" placeholder="Number of days" />
+      </div>
 
-  <label>Notes</label>
-  <textarea id="notes" placeholder="Any extra notes..."></textarea>
-
-  <button type="submit">Submit Reminder</button>
-</form>
-
-<p id="confirmation" style="margin-top: 20px;"></p>
-
-
+      <button type="submit">Create Reminder</button>
+    </form>
+    <p id="confirmation"></p>
   </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="script.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = 'https://osmirjtgigrcrkzzhngj.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zbWlyanRnaWdyY3JrenpobmdqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNzE4ODUsImV4cCI6MjA2OTk0Nzg4NX0.zMIpS_TywokR16NWg_92Ay8aqC47Qdbj8FdXBa2Ct2s';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    document.getElementById("recurrence").addEventListener("change", function() {
+      const customContainer = document.getElementById("customRecurrenceContainer");
+      customContainer.style.display = this.value === "custom" ? "block" : "none";
+    });
 
+    document.getElementById("paymentForm").addEventListener("submit", async function(event) {
+      event.preventDefault();
+
+      const amount = document.getElementById("amount").value;
+      const title = document.getElementById("title").value;
+      const due_date = document.getElementById("due_date").value;
+      const category = document.getElementById("category").value;
+      const recurrence = document.getElementById("recurrence").value;
+      let custom_recurrence_days = null;
+      
+      if (recurrence === "custom") {
+        const val = parseInt(document.getElementById("customRecurrenceDays").value, 10);
+        if (isNaN(val) || val < 1) {
+          alert("Please enter a valid number of days for custom recurrence.");
+          return;
+        }
+        custom_recurrence_days = val;
+      }
+
+      const due_date_value = new Date(due_date).toISOString();
+      const confirmation = document.getElementById("confirmation");
+
+      try {
+        const { error } = await supabase
+          .from('payment_reminders')
+          .insert([{
+            title,
+            amount: parseFloat(amount),
+            due_date: due_date_value,
+            category,
+            recurrence,
+            custom_recurrence_days,
+            is_done: false
+          }]);
+
+        if (error) throw error;
+
+        confirmation.className = "success";
+        confirmation.innerText = `Reminder created for ₹${amount} to ${title} on ${new Date(due_date_value).toLocaleDateString()}`;
+        document.getElementById("paymentForm").reset();
+        document.getElementById("customRecurrenceContainer").style.display = "none";
+      } catch (error) {
+        confirmation.className = "error";
+        confirmation.innerText = `Error: ${error.message}`;
+      }
+    });
+  </script>
 </body>
 </html>
-
-
-
-
