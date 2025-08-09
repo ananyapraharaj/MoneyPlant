@@ -1,35 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Payment Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --primary: #1a1a1a;
+      --primary: #0f0f0f;
       --secondary: #2ecc71;
       --light: #f8f9fa;
-      --dark: #121212;
-      --gray: #333;
-      --light-gray: #444;
+      --dark: rgba(255, 255, 255, 0.05);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --gray: rgba(255, 255, 255, 0.15);
     }
-    
+
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: 'Inter', sans-serif;
       margin: 0;
       padding: 2rem;
-      background-color: var(--primary);
+      background: radial-gradient(circle at top, #1b1b1b, #0f0f0f);
       color: var(--light);
       min-height: 100vh;
+      backdrop-filter: blur(10px);
     }
-    
+
     h1 {
       text-align: center;
       color: var(--secondary);
       margin-bottom: 2rem;
       font-weight: 600;
+      letter-spacing: 0.5px;
+      text-shadow: 0 0 8px rgba(46, 204, 113, 0.3);
     }
-    
+
     .reminders-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -37,54 +41,56 @@
       max-width: 1200px;
       margin: 0 auto;
     }
-    
+
     .reminder-card {
-      background-color: var(--dark);
-      border-radius: 8px;
+      background: var(--dark);
+      border-radius: 16px;
       padding: 1.5rem;
-      border: 1px solid var(--gray);
+      border: 1px solid var(--glass-border);
       transition: all 0.3s ease;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
     }
-    
+
     .reminder-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+      transform: translateY(-4px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.4);
     }
-    
+
     .reminder-card.urgent {
       border-left: 4px solid #e74c3c;
     }
-    
+
     .reminder-card.soon {
       border-left: 4px solid #f39c12;
     }
-    
+
     .reminder-card.not-urgent {
       border-left: 4px solid var(--secondary);
     }
-    
+
     .reminder-card.done {
-      opacity: 0.6;
-      background-color: rgba(46, 204, 113, 0.05);
+      opacity: 0.5;
+      background-color: rgba(46, 204, 113, 0.08);
     }
-    
+
     .reminder-title {
-      font-size: 1.2rem;
+      font-size: 1.3rem;
       font-weight: 600;
       margin: 0 0 0.5rem;
       color: var(--light);
     }
-    
+
     .reminder-detail {
-      font-size: 0.9rem;
+      font-size: 0.95rem;
       margin: 0.3rem 0;
-      color: #aaa;
+      color: rgba(255, 255, 255, 0.7);
     }
-    
+
     .reminder-detail strong {
       color: var(--light);
     }
-    
+
     .paid-toggle {
       display: flex;
       align-items: center;
@@ -92,7 +98,7 @@
       padding-top: 1rem;
       border-top: 1px solid var(--gray);
     }
-    
+
     .paid-toggle label {
       display: flex;
       align-items: center;
@@ -100,34 +106,54 @@
       font-size: 0.9rem;
       color: var(--light);
     }
-    
+
     .paid-toggle input {
       margin-right: 0.5rem;
       accent-color: var(--secondary);
+      transform: scale(1.2);
     }
-    
-    .loading, .error {
+
+    .loading, .error, .empty-state {
       text-align: center;
       grid-column: 1 / -1;
       padding: 2rem;
-      color: #aaa;
+      color: rgba(255, 255, 255, 0.6);
     }
-    
+
     .error {
       color: #e74c3c;
+    } 
+    .nav-button-container {
+      position: absolute;
+      top: 20px;
+      right: 20px;
     }
-    
-    .empty-state {
-      text-align: center;
-      grid-column: 1 / -1;
-      padding: 3rem;
-      color: #666;
+
+    .nav-button {
+      display: inline-block;
+      padding: 8px 16px;
+      background-color: var(--gray);
+      color: var(--secondary);
+      border: 1px solid var(--secondary);
+      border-radius: 6px;
+      font-weight: 500;
+      font-size: 0.9rem;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .nav-button:hover {
+      background-color: rgba(46, 204, 113, 0.1);
+      transform: translateY(-2px);
+      box-shadow: 0 0 12px rgba(46, 204, 113, 0.3);
     }
   </style>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
-  <h1>Payment Dashboard</h1>
+  <h1>Payment Dashboard</h1> 
+  <div class="nav-button-container">
+    <a href="index.html" class="nav-button">Add New Reminder</a>
+  </div>
   <div class="reminders-grid" id="remindersContainer">
     <p class="loading">Loading reminders...</p>
   </div>
@@ -170,17 +196,32 @@
         case 'biweekly': d.setDate(d.getDate() + 14); break;
         case 'monthly': d.setMonth(d.getMonth() + 1); break;
         case 'yearly': d.setFullYear(d.getFullYear() + 1); break;
-        case 'custom':
-          if (customDays) d.setDate(d.getDate() + customDays);
-          break;
+        case 'custom': if (customDays) d.setDate(d.getDate() + customDays); break;
         default: return null;
       }
       return d.toISOString().split('T')[0];
     };
 
     const handleDoneChange = async (reminder, checked, supabase, card) => {
-      let updateFields = { is_done: checked };
+      // Handle one-time payments (delete them when marked as paid)
+      if (checked && reminder.recurrence === "none") {
+        const { error } = await supabase
+          .from('payment_reminders')
+          .delete()
+          .eq('id', reminder.id);
+        
+        if (error) {
+          alert("Failed to delete reminder: " + error.message);
+          return;
+        }
+        
+        // Remove the card from the UI immediately
+        card.remove();
+        return;
+      }
 
+      // Handle recurring payments
+      let updateFields = { is_done: checked };
       if (checked && reminder.recurrence && reminder.recurrence !== 'none') {
         const nextDueDate = advanceDueDate(reminder.due_date, reminder.recurrence, reminder.custom_recurrence_days);
         if (nextDueDate) {
@@ -188,17 +229,17 @@
           updateFields.is_done = false;
         }
       }
-
+      
       const { error } = await supabase
         .from('payment_reminders')
         .update(updateFields)
         .eq('id', reminder.id);
-
-      if (error) {
-        alert("Failed to update status: " + error.message);
-        return;
+      
+      if (error) { 
+        alert("Failed to update status: " + error.message); 
+        return; 
       }
-
+      
       if (checked) {
         card.classList.add('done');
         if (reminder.recurrence && reminder.recurrence !== 'none') {
@@ -220,7 +261,6 @@
 
         const container = document.getElementById('remindersContainer');
         container.innerHTML = '';
-
         if (error) throw error;
 
         if (!data?.length) {
@@ -233,7 +273,6 @@
           const urgencyClass = getUrgencyClass(reminder.due_date);
           card.className = `reminder-card ${urgencyClass}`;
           if (reminder.is_done) card.classList.add('done');
-
           card.innerHTML = `
             <h3 class="reminder-title">${reminder.title || 'Untitled Payment'}</h3>
             <p class="reminder-detail"><strong>Amount:</strong> ₹${reminder.amount || '0'}</p>
@@ -251,7 +290,6 @@
               </label>
             </div>
           `;
-
           container.appendChild(card);
           card.querySelector(`#done-${reminder.id}`).addEventListener('change', (e) => {
             handleDoneChange(reminder, e.target.checked, supabase, card);
@@ -260,11 +298,7 @@
 
       } catch (err) {
         console.error("Error:", err);
-        document.getElementById('remindersContainer').innerHTML = `
-          <p class="error">
-            Error loading reminders: ${err.message}
-          </p>
-        `;
+        document.getElementById('remindersContainer').innerHTML = `<p class="error">Error loading reminders: ${err.message}</p>`;
       }
     };
 
