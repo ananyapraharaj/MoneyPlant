@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Dashboard</title>
+  <style>
+    :root {
+      --primary: #1a1a1a;
+      --secondary: #2ecc71;
+      --light: #f8f9fa;
+      --dark: #121212;
+      --gray: #333;
+      --light-gray: #444;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      margin: 0;
+      padding: 2rem;
+      background-color: var(--primary);
+      color: var(--light);
+      min-height: 100vh;
+    }
+    
+    h1 {
+      text-align: center;
+      color: var(--secondary);
+      margin-bottom: 2rem;
+      font-weight: 600;
+    }
+    
+    .reminders-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .reminder-card {
+      background-color: var(--dark);
+      border-radius: 8px;
+      padding: 1.5rem;
+      border: 1px solid var(--gray);
+      transition: all 0.3s ease;
+    }
+    
+    .reminder-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    }
+    
+    .reminder-card.urgent {
+      border-left: 4px solid #e74c3c;
+    }
+    
+    .reminder-card.soon {
+      border-left: 4px solid #f39c12;
+    }
+    
+    .reminder-card.not-urgent {
+      border-left: 4px solid var(--secondary);
+    }
+    
+    .reminder-card.done {
+      opacity: 0.6;
+      background-color: rgba(46, 204, 113, 0.05);
+    }
+    
+    .reminder-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin: 0 0 0.5rem;
+      color: var(--light);
+    }
+    
+    .reminder-detail {
+      font-size: 0.9rem;
+      margin: 0.3rem 0;
+      color: #aaa;
+    }
+    
+    .reminder-detail strong {
+      color: var(--light);
+    }
+    
+    .paid-toggle {
+      display: flex;
+      align-items: center;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--gray);
+    }
+    
+    .paid-toggle label {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      font-size: 0.9rem;
+      color: var(--light);
+    }
+    
+    .paid-toggle input {
+      margin-right: 0.5rem;
+      accent-color: var(--secondary);
+    }
+    
+    .loading, .error {
+      text-align: center;
+      grid-column: 1 / -1;
+      padding: 2rem;
+      color: #aaa;
+    }
+    
+    .error {
+      color: #e74c3c;
+    }
+    
+    .empty-state {
+      text-align: center;
+      grid-column: 1 / -1;
+      padding: 3rem;
+      color: #666;
+    }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <h1>Payment Dashboard</h1>
+  <div class="reminders-grid" id="remindersContainer">
+    <p class="loading">Loading reminders...</p>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const initSupabase = () => {
+      const supabaseUrl = 'https://osmirjtgigrcrkzzhngj.supabase.co';
+      const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zbWlyanRnaWdyY3JrenpobmdqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNzE4ODUsImV4cCI6MjA2OTk0Nzg4NX0.zMIpS_TywokR16NWg_92Ay8aqC47Qdbj8FdXBa2Ct2s';
+      return window.supabase.createClient(supabaseUrl, supabaseKey);
+    };
+
+    const formatDate = (dateString) => {
+      if (!dateString) return "No due date";
+      try {
+        return new Date(dateString).toLocaleDateString('en-US', {
+          weekday: 'short',
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        });
+      } catch {
+        return dateString;
+      }
+    };
+
+    const getUrgencyClass = (dueDate) => {
+      if (!dueDate) return 'not-urgent';
+      const today = new Date();
+      const due = new Date(dueDate);
+      const diffDays = Math.ceil((due - today) / 86400000);
+      return diffDays <= 3 ? 'urgent' : diffDays <= 7 ? 'soon' : 'not-urgent';
+    };
+
+    const advanceDueDate = (dueDate, recurrence, customDays) => {
+      const d = new Date(dueDate);
+      switch (recurrence) {
+        case 'daily': d.setDate(d.getDate() + 1); break;
+        case 'weekly': d.setDate(d.getDate() + 7); break;
+        case 'biweekly': d.setDate(d.getDate() + 14); break;
+        case 'monthly': d.setMonth(d.getMonth() + 1); break;
+        case 'yearly': d.setFullYear(d.getFullYear() + 1); break;
+        case 'custom':
+          if (customDays) d.setDate(d.getDate() + customDays);
+          break;
+        default: return null;
+      }
+      return d.toISOString().split('T')[0];
+    };
+
+    const handleDoneChange = async (reminder, checked, supabase, card) => {
+      let updateFields = { is_done: checked };
+
+      if (checked && reminder.recurrence && reminder.recurrence !== 'none') {
+        const nextDueDate = advanceDueDate(reminder.due_date, reminder.recurrence, reminder.custom_recurrence_days);
+        if (nextDueDate) {
+          updateFields.due_date = nextDueDate;
+          updateFields.is_done = false;
+        }
+      }
+
+      const { error } = await supabase
+        .from('payment_reminders')
+        .update(updateFields)
+        .eq('id', reminder.id);
+
+      if (error) {
+        alert("Failed to update status: " + error.message);
+        return;
+      }
+
+      if (checked) {
+        card.classList.add('done');
+        if (reminder.recurrence && reminder.recurrence !== 'none') {
+          setTimeout(loadReminders, 600);
+        }
+      } else {
+        card.classList.remove('done');
+      }
+    };
+
+    const loadReminders = async () => {
+      try {
+        const supabase = initSupabase();
+        const { data, error } = await supabase
+          .from('payment_reminders')
+          .select('*')
+          .order('is_done', { ascending: true })
+          .order('due_date', { ascending: true });
+
+        const container = document.getElementById('remindersContainer');
+        container.innerHTML = '';
+
+        if (error) throw error;
+
+        if (!data?.length) {
+          container.innerHTML = '<p class="empty-state">No payment reminders found</p>';
+          return;
+        }
+
+        data.forEach(reminder => {
+          const card = document.createElement('div');
+          const urgencyClass = getUrgencyClass(reminder.due_date);
+          card.className = `reminder-card ${urgencyClass}`;
+          if (reminder.is_done) card.classList.add('done');
+
+          card.innerHTML = `
+            <h3 class="reminder-title">${reminder.title || 'Untitled Payment'}</h3>
+            <p class="reminder-detail"><strong>Amount:</strong> ₹${reminder.amount || '0'}</p>
+            <p class="reminder-detail"><strong>Due:</strong> ${formatDate(reminder.due_date)}</p>
+            <p class="reminder-detail"><strong>Category:</strong> ${reminder.category || 'General'}</p>
+            <p class="reminder-detail"><strong>Frequency:</strong> ${
+              reminder.recurrence === "none" || !reminder.recurrence ? "One-time"
+              : reminder.recurrence === "custom" ? `Every ${reminder.custom_recurrence_days || '?'} days`
+              : reminder.recurrence.charAt(0).toUpperCase() + reminder.recurrence.slice(1)
+            }</p>
+            <div class="paid-toggle">
+              <label>
+                <input type="checkbox" ${reminder.is_done ? 'checked' : ''} id="done-${reminder.id}">
+                Mark as Paid
+              </label>
+            </div>
+          `;
+
+          container.appendChild(card);
+          card.querySelector(`#done-${reminder.id}`).addEventListener('change', (e) => {
+            handleDoneChange(reminder, e.target.checked, supabase, card);
+          });
+        });
+
+      } catch (err) {
+        console.error("Error:", err);
+        document.getElementById('remindersContainer').innerHTML = `
+          <p class="error">
+            Error loading reminders: ${err.message}
+          </p>
+        `;
+      }
+    };
+
+    document.addEventListener('DOMContentLoaded', loadReminders);
+  </script>
+</body>
+</html>
